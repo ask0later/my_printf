@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-//extern "C" int sum(int x, int y);
+
+// nasm -f elf64  print.asm
+// g++ -no-pie main.cpp print.o
 
 extern "C" int my_printf(const char x[], ...);
 
