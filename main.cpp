@@ -15,8 +15,9 @@ int main()
         long long num3 = -1;
 
         const char str1[] = "karina";
+        const char str3[] = "love";
 
-        my_printf("number = <%o>, <%s>, <%d>, <%x>, <%b>, %c %%\n", num1, str1, num2, num3, 888, 'g');
+        my_printf("number = <%o>, <%s>, <%d>, <%x>, <%b>, %c %%\n %d %s %x %d %% %c %b", num1, str1, num2, num3, 888, 'g', -1, str3, 3802, 100, 33, 31);
 
         return 0;
 }

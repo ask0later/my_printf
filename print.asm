@@ -15,7 +15,8 @@ global my_printf
 ; Entry: first arg  - string
 ;        othet args - arg, which need input ot string 
 ; Assumes: r8 - counter of stack argument
-;          String - ptr of first arg
+;          rbx - ptr of first arg
+;
 ;       
 ;       rdi  - first  argument
 ;       rsi  - second argument
@@ -48,38 +49,37 @@ my_printf:
                 mov rsi, [rbp + r8]
                 add r8, 8
 
-                mov [String], rsi
+                push rbx
+
+                mov rbx, rsi            ; rbx - ptr of first arg
                 
 
                 .loop:
-                        mov r10, [String]               ;
-                        mov r11b, byte [r10]            ; current symbol
+                        mov r11b, byte [rbx]            ; current symbol
                         cmp r11b, 0x00                  ; '\0'
                         je .end_loop
 
                         cmp r11b, '%'                   ; function insert
                         jne .not_insert
 
-                        mov r10, [String]               ; next symbol
-                        inc r10                         ;
-                        mov [String], r10               ; %<this symbol>
+                        inc rbx
 
                         call insert_arg
-                        jmp .insert
+                        jmp .loop
 
                         .not_insert:
-                        mov rsi, [String]
+                        mov rsi, rbx
                         call my_putchar
 
-                        mov r10, [String]
-                        inc r10
-                        mov [String], r10
-
-                        .insert:
+                        inc rbx
 
                         jmp .loop
 
                 .end_loop:
+
+                pop rbx
+
+
 
                 pop rbp
 
@@ -128,29 +128,25 @@ my_putchar:
 insert_arg: 
                 mov rbp, rsp
 
-                add rbp, 24                     ; 8 byte * 3 = two return value and two rbp value
+                add rbp, 32                     ; 8 byte * 4 = two return value and rbp value and rbx value 
                                                 ; + one return value 
 
-                mov r10, [String]
-                mov r11b, byte [r10]            ; %<r11b>
-                and r11, 0xff                   ; 
+                xor r11, r11
+                mov r11b, byte [rbx]            ; %<r11b> 
 
-                mov r10, [String]               ; next symbol
-                inc r10
-                mov [String], r10               ; after %<smth>
+                                                ; next symbol
+                inc rbx                         ; after %<smth>
 
                 cmp r11b, '%'                   
                 je switch_perc
 
 
-                sub r11b, 'a'                   ; offset of 'a' ASCII code 
-                shl r11b, 3                     ; r11b *= 8 byte  
-                mov r12, [SwitchChar + r11]
-                jmp r12                         ; switch char
+                lea r11, [r11 * 8 - ('a' * 8) + SwitchChar]
+
+                jmp [r11]                       ; switch char
 
                 switch_perc:
-                        mov rsi, PercentSymbol  ; write twice '%' 
-                        call my_putchar
+                        mov rsi, PercentSymbol  ; write s'%' 
                         call my_putchar
 
                         jmp switch_exit
@@ -301,7 +297,7 @@ write_number:
 ;        
 ; Assumes: PtrHexNumber - ptr of converted number
 ;          
-; Destr: rax, rdi, rcx, rdx, rsi, r9, r10, r11
+; Destr: rax, rdi, rdx, rsi, r9, r10, r11
 ;---------------------------------------------------------------
 print_hex:       
                 push rcx
@@ -328,6 +324,7 @@ print_hex:
                         shr r9b, 4
                         call hex_converter      ; r9b converted
 
+                        
                         mov [PtrHexNumber + r11], r9b
                         inc r11
 
@@ -424,49 +421,18 @@ print_buf:
 
 
 section     .data
-String:      dq      0
-PtrHexNumber:   db      0,
-                db      0,
-                db      0,
-                db      0,
-                db      0,
-                db      0,
-                db      0,
-                db      0,
-                db      0,
-                db      0,
-                db      0,
-                db      0,
-                db      0,
-                db      0,
-                db      0,
-                db      0
-
+PtrHexNumber:   db      16 dup 0
 NumberBuffer:   db      65 dup 0
 
 SwitchChar:     dq switch_exit          ; a
                 dq switch_bin           ; b
                 dq switch_char          ; c
                 dq switch_dec           ; d
-                dq switch_exit          ; e
-                dq switch_exit          ; f
-                dq switch_exit          ; g
-                dq switch_exit          ; h
-                dq switch_exit          ; i
-                dq switch_exit          ; g
-                dq switch_exit          ; k
-                dq switch_exit          ; l
-                dq switch_exit          ; m
-                dq switch_exit          ; n
+                dq ('o'-'d' - 1) dup (switch_exit)
                 dq switch_oct           ; o
-                dq switch_exit          ; p
-                dq switch_exit          ; q
-                dq switch_exit          ; r
+                dq ('s'-'o' - 1) dup (switch_exit)
                 dq switch_str           ; s
-                dq switch_exit          ; t
-                dq switch_exit          ; u
-                dq switch_exit          ; v
-                dq switch_exit          ; w
+                dq ('x'-'s' - 1) dup (switch_exit)
                 dq switch_hex           ; x
 
 PtrWord         dw      0
