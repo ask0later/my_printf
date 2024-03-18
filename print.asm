@@ -395,7 +395,7 @@ hex_converter:
 
 
 ;---------------------------------------------------------------
-; prints the buffer until it reaches \0
+; prints the buffer until it reaches \0 yaroslav loh
 ;
 ; Entry: rsi - ptr of buffer
 ;        
